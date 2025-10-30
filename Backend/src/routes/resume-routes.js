@@ -7,7 +7,7 @@ import {
   updateResume,
   removeResume,
   saveTemplate
-} from "../controller/resume.controller.js";
+} from "../controller/resume-controller.js";
 import { isUserAvailable } from "../middleware/auth.js";
 
 const router = Router();

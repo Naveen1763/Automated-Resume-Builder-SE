@@ -5,7 +5,7 @@ import {
   registerUser,
   sendOtp,
   verifyOtp,
-} from "../controller/user.controller.js";
+} from "../controller/user-controller.js";
 import { Router } from "express";
 import { isUserAvailable } from "../middleware/auth.js";
 

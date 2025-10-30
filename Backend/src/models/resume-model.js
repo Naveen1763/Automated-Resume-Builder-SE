@@ -1,5 +1,5 @@
 import mongoose from "mongoose";
-import educationSchema from "./education.model.js";
+import educationSchema from "./education-model.js";
 const resumeSchema = new mongoose.Schema({
   firstName: { type: String, default: "" },
   lastName: { type: String, default: "" },

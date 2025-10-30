@@ -1,7 +1,7 @@
 import express from "express";
 import cookieParser from "cookie-parser";
-import userRouter from "./routes/user.routes.js";
-import resumeRouter from "./routes/resume.routes.js";
+import userRouter from "./routes/user-routes.js";
+import resumeRouter from "./routes/resume-routes.js";
 import cors from "cors";
 import { config } from "dotenv";
 config();

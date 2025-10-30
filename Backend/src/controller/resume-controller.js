@@ -1,6 +1,6 @@
 import { ApiError } from "../utils/ApiError.js";
 import { ApiResponse } from "../utils/ApiResponse.js";
-import Resume from "../models/resume.model.js";
+import Resume from "../models/resume-model.js";
 
 const start = async (req, res) => {
   return res
