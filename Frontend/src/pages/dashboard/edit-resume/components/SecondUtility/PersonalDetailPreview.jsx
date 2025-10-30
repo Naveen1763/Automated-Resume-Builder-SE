@@ -3,6 +3,16 @@ import React from "react";
 function PersonalDetailPreview({ resumeInfo }) {
   const theme = resumeInfo?.themeColor || "#111";
 
+  // derived fields with sensible fallbacks
+  const jobTitle =
+    resumeInfo?.jobTitle || resumeInfo?.designation || resumeInfo?.title;
+  const address =
+    resumeInfo?.address ||
+    resumeInfo?.location ||
+    (resumeInfo?.city && resumeInfo?.state
+      ? `${resumeInfo.city}, ${resumeInfo.state}`
+      : resumeInfo?.city || resumeInfo?.state);
+
   const contacts = [
     {
       key: "username",
@@ -12,6 +22,16 @@ function PersonalDetailPreview({ resumeInfo }) {
         </svg>
       ),
       value: resumeInfo?.username,
+    },
+    // address / location contact
+    {
+      key: "address",
+      icon: (
+        <svg viewBox="0 0 24 24" fill="currentColor" className="w-4 h-4">
+          <path d="M12 2C8.13 2 5 5.13 5 9c0 5.25 7 13 7 13s7-7.75 7-13c0-3.87-3.13-7-7-7zm0 9.5A2.5 2.5 0 1112 6a2.5 2.5 0 010 5.5z" />
+        </svg>
+      ),
+      value: address,
     },
     {
       key: "linkedin",
@@ -68,6 +88,15 @@ function PersonalDetailPreview({ resumeInfo }) {
         >
           {resumeInfo?.firstName} {resumeInfo?.lastName}
         </h1>
+
+        {jobTitle && (
+          <div
+            className="text-sm mt-1 font-medium"
+            style={{ color: "#4b5563" /* slate-600 */ }}
+          >
+            {jobTitle}
+          </div>
+        )}
 
         <div className="flex flex-wrap items-center justify-center gap-3 mt-2 text-xs text-slate-700">
           {contacts.map((c, i) => (

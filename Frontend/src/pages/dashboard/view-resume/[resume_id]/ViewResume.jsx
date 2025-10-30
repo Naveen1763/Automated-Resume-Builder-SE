@@ -43,22 +43,29 @@ function ViewResume() {
       const originalHeight = element.style.height;
       const originalOverflow = element.style.overflow;
 
-      // Set fixed dimensions for PDF generation
-      element.style.width = "210mm";
-      element.style.height = "297mm";
+      // Force a printable width for A4
+      element.style.width = "794px"; // ~210mm at 96dpi
       element.style.overflow = "visible";
 
+      // Give browser a tick to reflow with new styles
+      await new Promise((res) => setTimeout(res, 50));
+
+      // Determine full content height (in pixels)
+      const contentHeightPx = element.scrollHeight || element.offsetHeight || element.clientHeight;
+
+      // Configure html2canvas options to capture the whole element
+      const scale = 2.5; // quality scale
       const canvas = await html2canvas(element, {
-        scale: 3, // Higher scale for better quality
+        scale,
         useCORS: true,
         logging: false,
         backgroundColor: "#ffffff",
-        width: 794, // A4 width in pixels at 96 DPI
-        height: 1123, // A4 height in pixels at 96 DPI
+        width: element.clientWidth,
+        height: contentHeightPx,
         scrollX: 0,
         scrollY: 0,
-        windowWidth: 794,
-        windowHeight: 1123,
+        windowWidth: element.clientWidth,
+        windowHeight: contentHeightPx,
       });
 
       // Restore original styles
@@ -76,19 +83,79 @@ function ViewResume() {
       const pdfWidth = pdf.internal.pageSize.getWidth();
       const pdfHeight = pdf.internal.pageSize.getHeight();
 
-      // Calculate dimensions to fit the page
-      const imgWidth = canvas.width;
-      const imgHeight = canvas.height;
-      const ratio = Math.min(pdfWidth / imgWidth, pdfHeight / imgHeight) * 0.95; // 95% to prevent overflow
+      const imgWidthPx = canvas.width;
+      const imgHeightPx = canvas.height;
 
-      pdf.addImage(
-        imgData,
-        "PNG",
-        (pdfWidth - imgWidth * ratio) / 2,
-        (pdfHeight - imgHeight * ratio) / 2,
-        imgWidth * ratio,
-        imgHeight * ratio
-      );
+      // Ratio to convert canvas px -> pdf mm
+      const pxToMmRatio = pdfWidth / imgWidthPx;
+      const pageHeightPx = Math.floor(pdfHeight / pxToMmRatio);
+
+      // Decide if we need multiple pages.
+      // Only enable multi-page splitting for the third template (case-insensitive check).
+      const isThirdTemplate =
+        String(template || "").toLowerCase().includes("third") ||
+        String(template || "").trim() === "3" ||
+        String(template || "").toLowerCase().includes("template3") ||
+        String(template || "").toLowerCase().includes("thirdtemplate");
+
+      if (!isThirdTemplate || imgHeightPx <= pageHeightPx) {
+        // Single page: center and fit
+        const ratio = Math.min(pdfWidth / imgWidthPx, pdfHeight / imgHeightPx) * 0.95;
+        pdf.addImage(
+          imgData,
+          "PNG",
+          (pdfWidth - imgWidthPx * ratio) / 2,
+          (pdfHeight - imgHeightPx * ratio) / 2,
+          imgWidthPx * ratio,
+          imgHeightPx * ratio
+        );
+      } else {
+        // Multi-page for the third template: slice canvas into page-sized chunks
+        let position = 0;
+        let pageIndex = 0;
+
+        while (position < imgHeightPx) {
+          const sliceHeight = Math.min(pageHeightPx, imgHeightPx - position);
+
+          // create a temporary canvas to hold the slice
+          const tmpCanvas = document.createElement("canvas");
+          tmpCanvas.width = imgWidthPx;
+          tmpCanvas.height = sliceHeight;
+          const tmpCtx = tmpCanvas.getContext("2d");
+
+          // draw the slice from the main canvas
+          tmpCtx.drawImage(
+            canvas,
+            0,
+            position,
+            imgWidthPx,
+            sliceHeight,
+            0,
+            0,
+            imgWidthPx,
+            sliceHeight
+          );
+
+          const tmpData = tmpCanvas.toDataURL("image/png", 1.0);
+
+          const imgHeightMm = sliceHeight * pxToMmRatio;
+
+          if (pageIndex > 0) pdf.addPage();
+
+          // center horizontally, and use full height available
+          pdf.addImage(
+            tmpData,
+            "PNG",
+            0,
+            0,
+            pdfWidth,
+            imgHeightMm
+          );
+
+          position += sliceHeight;
+          pageIndex++;
+        }
+      }
 
       pdf.save("resume.pdf");
       toast.success("Resume downloaded as PDF successfully!");
@@ -185,7 +252,7 @@ function ViewResume() {
         <div id="noPrint">
           <div className="my-10 mx-10 md:mx-20 lg:mx-36">
             <h2 className="text-center text-2xl font-medium">
-              Congrats! Your Ultimate Automated Resume is ready !{" "}
+              Congrats! Your Automated Resume is ready !{" "}
             </h2>
             <p className="text-center text-gray-400">
               Now you are ready to download your resume{" "}
